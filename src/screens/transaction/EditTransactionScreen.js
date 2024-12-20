@@ -5,80 +5,63 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
-  ScrollView,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
+  ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTransaction } from "../../context/TransactionContext";
 import { useBudget } from "../../context/BudgetContext";
 
-// Danh sách nhóm chi tiêu mẫu
-const CATEGORIES = [
-  { id: "1", name: "Ăn uống", icon: "restaurant" },
-  { id: "2", name: "Di chuyển", icon: "car" },
-  { id: "3", name: "Mua sắm", icon: "cart" },
-  { id: "4", name: "Giải trí", icon: "game-controller" },
-  { id: "5", name: "Hóa đơn", icon: "receipt" },
-];
+export default function EditTransactionScreen({ route, navigation }) {
+  const { transaction } = route.params;
+  const [amount, setAmount] = useState(transaction.amount.toString());
+  const [note, setNote] = useState(transaction.note);
+  const [category, setCategory] = useState(transaction.category);
 
-export default function AddTransactionScreen({ navigation }) {
-  const [amount, setAmount] = useState("");
-  const [note, setNote] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [showCategories, setShowCategories] = useState(false);
-
-  const { addTransaction } = useTransaction();
+  const { updateTransaction } = useTransaction();
   const { updateBalance } = useBudget();
 
   const handleAmountChange = (value) => {
-    // Chỉ cho phép nhập số
     const numericValue = value.replace(/[^0-9]/g, "");
     setAmount(numericValue);
   };
 
-  const handleCategorySelect = (category) => {
-    setSelectedCategory(category);
-    setShowCategories(false);
-  };
-
-  const handleSave = async () => {
-    if (!amount || !selectedCategory) {
-      Alert.alert("Lỗi", "Vui lòng nhập số tiền và chọn nhóm");
+  const handleUpdate = async () => {
+    if (!amount || amount === "0") {
+      Alert.alert("Lỗi", "Vui lòng nhập số tiền");
       return;
     }
 
     try {
       const numericAmount = parseInt(amount, 10);
+      const amountDiff = numericAmount - transaction.amount;
 
-      await addTransaction({
+      await updateTransaction(transaction.id, {
         amount: numericAmount,
         note,
-        category: selectedCategory.name,
-        categoryIcon: selectedCategory.icon,
-        type: "expense",
+        category,
       });
 
-      // Trừ số tiền khỏi tổng số dư
-      await updateBalance(-numericAmount);
+      // Cập nhật số dư tổng
+      if (transaction.type === "expense") {
+        await updateBalance(amountDiff);
+      } else {
+        await updateBalance(-amountDiff);
+      }
 
-      Alert.alert("Thành công", "Đã thêm chi tiêu", [
+      Alert.alert("Thành công", "Đã cập nhật giao dịch", [
         {
           text: "OK",
-          onPress: () =>
-            navigation.navigate("Main", { screen: "Transactions" }),
+          onPress: () => navigation.goBack(),
         },
       ]);
     } catch (error) {
-      Alert.alert("Lỗi", "Không thể lưu chi tiêu");
+      Alert.alert("Lỗi", "Không thể cập nhật giao dịch");
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}>
+    <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -86,7 +69,7 @@ export default function AddTransactionScreen({ navigation }) {
           onPress={() => navigation.goBack()}>
           <Ionicons name="close" size={24} color="black" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Thêm chi tiêu</Text>
+        <Text style={styles.headerTitle}>Sửa giao dịch</Text>
       </View>
 
       <ScrollView style={styles.content}>
@@ -107,42 +90,15 @@ export default function AddTransactionScreen({ navigation }) {
         </View>
 
         {/* Category Selection */}
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => setShowCategories(!showCategories)}>
+        <TouchableOpacity style={styles.menuItem}>
           <View style={styles.menuLeft}>
             <View style={styles.iconPlaceholder}>
-              {selectedCategory ? (
-                <Ionicons name={selectedCategory.icon} size={24} color="#666" />
-              ) : (
-                <Ionicons name="help" size={24} color="#666" />
-              )}
+              <Ionicons name="help" size={24} color="#666" />
             </View>
-            <Text style={styles.menuText}>
-              {selectedCategory ? selectedCategory.name : "Chọn nhóm"}
-            </Text>
+            <Text style={styles.menuText}>{category || "Chọn nhóm"}</Text>
           </View>
-          <Ionicons
-            name={showCategories ? "chevron-up" : "chevron-down"}
-            size={24}
-            color="#666"
-          />
+          <Ionicons name="chevron-forward" size={24} color="#666" />
         </TouchableOpacity>
-
-        {/* Categories List */}
-        {showCategories && (
-          <View style={styles.categoriesList}>
-            {CATEGORIES.map((category) => (
-              <TouchableOpacity
-                key={category.id}
-                style={styles.categoryItem}
-                onPress={() => handleCategorySelect(category)}>
-                <Ionicons name={category.icon} size={24} color="#666" />
-                <Text style={styles.categoryText}>{category.name}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
 
         {/* Note Input */}
         <View style={styles.menuItem}>
@@ -159,22 +115,22 @@ export default function AddTransactionScreen({ navigation }) {
         </View>
       </ScrollView>
 
-      {/* Save Button */}
+      {/* Update Button */}
       <TouchableOpacity
         style={[
-          styles.saveButton,
-          amount && selectedCategory ? styles.saveButtonActive : {},
+          styles.updateButton,
+          amount && amount !== "0" ? styles.updateButtonActive : {},
         ]}
-        onPress={handleSave}>
+        onPress={handleUpdate}>
         <Text
           style={[
-            styles.saveButtonText,
-            amount && selectedCategory ? styles.saveButtonTextActive : {},
+            styles.updateButtonText,
+            amount && amount !== "0" ? styles.updateButtonTextActive : {},
           ]}>
-          LƯU
+          CẬP NHẬT
         </Text>
       </TouchableOpacity>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -254,43 +210,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
   },
-  categoriesList: {
-    backgroundColor: "#f5f5f5",
-    marginBottom: 1,
-  },
-  categoryItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  categoryText: {
-    fontSize: 16,
-    color: "#666",
-    marginLeft: 12,
-  },
   noteInput: {
     flex: 1,
     fontSize: 16,
     marginLeft: 12,
     color: "#666",
   },
-  saveButton: {
+  updateButton: {
     margin: 16,
     padding: 16,
     backgroundColor: "#eee",
     borderRadius: 8,
     alignItems: "center",
   },
-  saveButtonActive: {
+  updateButtonActive: {
     backgroundColor: "#4CAF50",
   },
-  saveButtonText: {
+  updateButtonText: {
     fontSize: 16,
     color: "#666",
   },
-  saveButtonTextActive: {
+  updateButtonTextActive: {
     color: "white",
   },
 });

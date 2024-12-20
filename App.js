@@ -16,8 +16,10 @@ import BudgetScreen from "./src/screens/main/BudgetScreen";
 import AccountScreen from "./src/screens/main/AccountScreen";
 import AddTransactionScreen from "./src/screens/transaction/AddTransactionScreen";
 import AddBudgetScreen from "./src/screens/budget/AddBudgetScreen";
+import EditTransactionScreen from "./src/screens/transaction/EditTransactionScreen";
 
 import { BudgetProvider } from "./src/context/BudgetContext";
+import { TransactionProvider } from "./src/context/TransactionContext";
 
 const Stack = createStackNavigator();
 const AuthStack = createStackNavigator();
@@ -112,37 +114,47 @@ const TabNavigator = () => {
 
 export default function App() {
   return (
-    <BudgetProvider>
-      <NavigationContainer>
-        <Stack.Navigator initialRouteName="Auth">
-          <Stack.Screen
-            name="Auth"
-            component={AuthNavigator}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="Main"
-            component={TabNavigator}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="AddTransactionScreen"
-            component={AddTransactionScreen}
-            options={{
-              presentation: "modal",
-              headerShown: false,
-            }}
-          />
-          <Stack.Screen
-            name="AddBudget"
-            component={AddBudgetScreen}
-            options={{
-              presentation: "modal",
-              headerShown: false,
-            }}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </BudgetProvider>
+    <TransactionProvider>
+      <BudgetProvider>
+        <NavigationContainer>
+          <Stack.Navigator initialRouteName="Auth">
+            <Stack.Screen
+              name="Auth"
+              component={AuthNavigator}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="Main"
+              component={TabNavigator}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="AddTransactionScreen"
+              component={AddTransactionScreen}
+              options={{
+                presentation: "modal",
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="AddBudget"
+              component={AddBudgetScreen}
+              options={{
+                presentation: "modal",
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="EditTransaction"
+              component={EditTransactionScreen}
+              options={{
+                title: "Sửa giao dịch",
+                presentation: "modal",
+              }}
+            />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </BudgetProvider>
+    </TransactionProvider>
   );
 }
