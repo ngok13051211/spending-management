@@ -7,8 +7,15 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useBudget } from "../../context/BudgetContext";
 
 export default function OverviewScreen() {
+  const { totalBalance } = useBudget();
+
+  const formatCurrency = (amount) => {
+    return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  };
+
   return (
     <ScrollView style={styles.container}>
       {/* Ví của tôi */}
@@ -19,7 +26,9 @@ export default function OverviewScreen() {
             <Ionicons name="document-outline" size={24} color="#666" />
           </View>
           <Text style={styles.walletLabel}>Tổng số dư</Text>
-          <Text style={styles.walletAmount}>0 đ</Text>
+          <Text style={styles.walletAmount}>
+            {formatCurrency(totalBalance)} đ
+          </Text>
         </View>
       </View>
 

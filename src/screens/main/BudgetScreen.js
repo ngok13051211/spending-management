@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-export default function BudgetScreen() {
+export default function BudgetScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.emptyState}>
@@ -17,7 +17,9 @@ export default function BudgetScreen() {
           kiểm soát ngân sách
         </Text>
 
-        <TouchableOpacity style={styles.button}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate("AddBudget")}>
           <Text style={styles.buttonText}>Tạo ngân sách</Text>
         </TouchableOpacity>
       </View>
