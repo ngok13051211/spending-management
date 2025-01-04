@@ -19,7 +19,6 @@ export default function AddBudgetScreen({ navigation }) {
   const { updateBalance } = useBudget();
 
   const handleAmountChange = (value) => {
-    // Loại bỏ các ký tự không phải số
     const numericValue = value.replace(/[^0-9]/g, "");
     setAmount(numericValue);
   };
@@ -97,7 +96,7 @@ export default function AddBudgetScreen({ navigation }) {
         <TouchableOpacity style={styles.menuItem}>
           <View style={styles.menuLeft}>
             <Ionicons name="calendar-outline" size={24} color="#666" />
-            <Text style={styles.menuText}>Tháng này (01/12 - 31/12)</Text>
+            <Text style={styles.menuText}>Tháng này</Text>
           </View>
           <Ionicons name="chevron-forward" size={24} color="#666" />
         </TouchableOpacity>

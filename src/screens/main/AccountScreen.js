@@ -1,44 +1,80 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { logout } from "../../utils/auth";
+import { useAuth } from "../../context/AuthContext";
 
 export default function AccountScreen({ navigation }) {
-  // Giả sử thông tin user được lưu trong state hoặc context
-  const userEmail = "dvm28082002@gmail.com";
-  const userName = "Dvm28082002";
+  const { userInfo, logout } = useAuth();
 
-  const handleLogout = () => {
-    logout(navigation);
+  // Thêm log để debug
+  console.log("Current userInfo:", userInfo);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigation.navigate("Auth");
+    } catch (error) {
+      Alert.alert("Lỗi", "Không thể đăng xuất");
+    }
   };
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Quản lý tài khoản</Text>
+  // Kiểm tra và hiển thị dữ liệu mặc định nếu chưa có
+  const defaultUser = {
+    fullName: "Người dùng",
+    email: "Email chưa cập nhật",
+  };
 
-      {/* User Profile Section */}
-      <View style={styles.profileSection}>
-        <View style={styles.avatarContainer}>
-          <Text style={styles.avatarText}>L</Text>
-        </View>
-        <Text style={styles.userName}>{userName}</Text>
-        <Text style={styles.userEmail}>{userEmail}</Text>
+  const userData = userInfo || defaultUser;
+  const firstLetter = userData.fullName.charAt(0).toUpperCase();
+
+  return (
+    <ScrollView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Quản lý tài khoản</Text>
       </View>
 
-      {/* Account Options */}
-      <View style={styles.optionsContainer}>
-        <TouchableOpacity style={styles.optionItem}>
-          <View style={styles.optionLeft}>
-            <Ionicons name="key-outline" size={24} color="#666" />
-            <Text style={styles.optionText}>Thay đổi mật khẩu</Text>
+      {/* User Info Section */}
+      <View style={styles.userSection}>
+        <View style={styles.avatarCircle}>
+          <Text style={styles.avatarText}>{firstLetter}</Text>
+        </View>
+        <View style={styles.userInfo}>
+          <Text style={styles.username}>{userData.fullName}</Text>
+          <Text style={styles.email}>{userData.email}</Text>
+        </View>
+      </View>
+
+      {/* Menu Items */}
+      <View style={styles.menuSection}>
+        <TouchableOpacity style={styles.menuItem}>
+          <View style={styles.menuLeft}>
+            <Ionicons name="person-outline" size={24} color="#666" />
+            <Text style={styles.menuText}>Thông tin cá nhân</Text>
           </View>
           <Ionicons name="chevron-forward" size={24} color="#666" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.optionItem}>
-          <View style={styles.optionLeft}>
-            <Ionicons name="trash-outline" size={24} color="#666" />
-            <Text style={styles.optionText}>Xóa tài khoản</Text>
+        <TouchableOpacity style={styles.menuItem}>
+          <View style={styles.menuLeft}>
+            <Ionicons name="lock-closed-outline" size={24} color="#666" />
+            <Text style={styles.menuText}>Đổi mật khẩu</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color="#666" />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.menuItem}>
+          <View style={styles.menuLeft}>
+            <Ionicons name="notifications-outline" size={24} color="#666" />
+            <Text style={styles.menuText}>Thông báo</Text>
           </View>
           <Ionicons name="chevron-forward" size={24} color="#666" />
         </TouchableOpacity>
@@ -48,82 +84,95 @@ export default function AccountScreen({ navigation }) {
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>Đăng xuất</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#fff",
   },
-  title: {
+  header: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  headerTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    padding: 16,
-    backgroundColor: "white",
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    color: "#000",
   },
-  profileSection: {
-    backgroundColor: "white",
-    alignItems: "center",
+  userSection: {
     padding: 20,
+    alignItems: "center",
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
   },
-  avatarContainer: {
+  avatarCircle: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: "#FFD700",
+    backgroundColor: "#F4D03F", // Màu vàng như trong ảnh
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 12,
   },
   avatarText: {
     fontSize: 32,
-    color: "white",
     fontWeight: "bold",
+    color: "#fff",
   },
-  userName: {
+  userInfo: {
+    alignItems: "center",
+  },
+  username: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: "600",
+    color: "#000",
     marginBottom: 4,
   },
-  userEmail: {
+  email: {
     fontSize: 14,
     color: "#666",
   },
-  optionsContainer: {
-    backgroundColor: "white",
+  menuSection: {
     marginTop: 20,
   },
-  optionItem: {
+  menuItem: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     padding: 16,
+    backgroundColor: "#fff",
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
   },
-  optionLeft: {
+  menuLeft: {
     flexDirection: "row",
     alignItems: "center",
   },
-  optionText: {
+  menuText: {
     fontSize: 16,
+    color: "#000",
     marginLeft: 12,
   },
   logoutButton: {
     margin: 20,
     padding: 16,
-    backgroundColor: "#eee",
+    backgroundColor: "#FF3B30",
     borderRadius: 8,
     alignItems: "center",
   },
   logoutText: {
     fontSize: 16,
-    color: "#666",
+    color: "#fff",
+    fontWeight: "600",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
   },
 });

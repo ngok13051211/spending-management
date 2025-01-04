@@ -20,6 +20,7 @@ import EditTransactionScreen from "./src/screens/transaction/EditTransactionScre
 
 import { BudgetProvider } from "./src/context/BudgetContext";
 import { TransactionProvider } from "./src/context/TransactionContext";
+import { AuthProvider } from "./src/context/AuthContext";
 
 const Stack = createStackNavigator();
 const AuthStack = createStackNavigator();
@@ -63,12 +64,18 @@ const TabNavigator = () => {
       <Tab.Screen
         name="Overview"
         component={OverviewScreen}
-        options={{ title: "Tổng quan" }}
+        options={{
+          title: "Tổng quan",
+          headerTitleAlign: "center",
+        }}
       />
       <Tab.Screen
         name="Transactions"
         component={TransactionsScreen}
-        options={{ title: "Số giao dịch" }}
+        options={{
+          title: "Sổ giao dịch",
+          headerTitleAlign: "center",
+        }}
       />
       <Tab.Screen
         name="AddTransaction"
@@ -101,12 +108,18 @@ const TabNavigator = () => {
       <Tab.Screen
         name="Budget"
         component={BudgetScreen}
-        options={{ title: "Ngân sách" }}
+        options={{
+          title: "Ngân sách",
+          headerTitleAlign: "center",
+        }}
       />
       <Tab.Screen
         name="Account"
         component={AccountScreen}
-        options={{ title: "Tài khoản" }}
+        options={{
+          title: "Tài khoản",
+          headerTitleAlign: "center",
+        }}
       />
     </Tab.Navigator>
   );
@@ -114,47 +127,49 @@ const TabNavigator = () => {
 
 export default function App() {
   return (
-    <TransactionProvider>
-      <BudgetProvider>
-        <NavigationContainer>
-          <Stack.Navigator initialRouteName="Auth">
-            <Stack.Screen
-              name="Auth"
-              component={AuthNavigator}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="Main"
-              component={TabNavigator}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="AddTransactionScreen"
-              component={AddTransactionScreen}
-              options={{
-                presentation: "modal",
-                headerShown: false,
-              }}
-            />
-            <Stack.Screen
-              name="AddBudget"
-              component={AddBudgetScreen}
-              options={{
-                presentation: "modal",
-                headerShown: false,
-              }}
-            />
-            <Stack.Screen
-              name="EditTransaction"
-              component={EditTransactionScreen}
-              options={{
-                title: "Sửa giao dịch",
-                presentation: "modal",
-              }}
-            />
-          </Stack.Navigator>
-        </NavigationContainer>
-      </BudgetProvider>
-    </TransactionProvider>
+    <AuthProvider>
+      <TransactionProvider>
+        <BudgetProvider>
+          <NavigationContainer>
+            <Stack.Navigator initialRouteName="Auth">
+              <Stack.Screen
+                name="Auth"
+                component={AuthNavigator}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="Main"
+                component={TabNavigator}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="AddTransactionScreen"
+                component={AddTransactionScreen}
+                options={{
+                  presentation: "modal",
+                  headerShown: false,
+                }}
+              />
+              <Stack.Screen
+                name="AddBudget"
+                component={AddBudgetScreen}
+                options={{
+                  presentation: "modal",
+                  headerShown: false,
+                }}
+              />
+              <Stack.Screen
+                name="EditTransaction"
+                component={EditTransactionScreen}
+                options={{
+                  title: "Sửa giao dịch",
+                  presentation: "modal",
+                }}
+              />
+            </Stack.Navigator>
+          </NavigationContainer>
+        </BudgetProvider>
+      </TransactionProvider>
+    </AuthProvider>
   );
 }

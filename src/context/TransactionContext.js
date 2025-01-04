@@ -1,17 +1,24 @@
 import React, { createContext, useState, useContext } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAuth } from "./AuthContext";
 
 const TransactionContext = createContext();
 
 export const TransactionProvider = ({ children }) => {
   const [transactions, setTransactions] = useState([]);
+  const { userInfo } = useAuth();
+
+  // Tạo key riêng cho từng user
+  const getTransactionsKey = () => `transactions_${userInfo?.email || "guest"}`;
 
   // Lấy danh sách giao dịch
   const loadTransactions = async () => {
     try {
-      const saved = await AsyncStorage.getItem("transactions");
+      const saved = await AsyncStorage.getItem(getTransactionsKey());
       if (saved) {
         setTransactions(JSON.parse(saved));
+      } else {
+        setTransactions([]); // Khởi tạo mảng rỗng cho user mới
       }
     } catch (error) {
       console.error("Error loading transactions:", error);
@@ -29,7 +36,7 @@ export const TransactionProvider = ({ children }) => {
       const updatedTransactions = [...transactions, newTransaction];
       setTransactions(updatedTransactions);
       await AsyncStorage.setItem(
-        "transactions",
+        getTransactionsKey(),
         JSON.stringify(updatedTransactions)
       );
       return newTransaction;
@@ -47,7 +54,7 @@ export const TransactionProvider = ({ children }) => {
       );
       setTransactions(updatedTransactions);
       await AsyncStorage.setItem(
-        "transactions",
+        getTransactionsKey(),
         JSON.stringify(updatedTransactions)
       );
     } catch (error) {
@@ -64,7 +71,7 @@ export const TransactionProvider = ({ children }) => {
       );
       setTransactions(updatedTransactions);
       await AsyncStorage.setItem(
-        "transactions",
+        getTransactionsKey(),
         JSON.stringify(updatedTransactions)
       );
     } catch (error) {
@@ -73,9 +80,14 @@ export const TransactionProvider = ({ children }) => {
     }
   };
 
+  // Load giao dịch khi userInfo thay đổi (đăng nhập/đăng xuất)
   React.useEffect(() => {
-    loadTransactions();
-  }, []);
+    if (userInfo) {
+      loadTransactions();
+    } else {
+      setTransactions([]); // Reset state khi không có user (không xóa dữ liệu)
+    }
+  }, [userInfo]);
 
   return (
     <TransactionContext.Provider

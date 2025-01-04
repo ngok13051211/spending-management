@@ -9,40 +9,30 @@ import {
 } from "react-native";
 import api from "../../config/api";
 import * as SecureStore from "expo-secure-store";
+import { useAuth } from "../../context/AuthContext";
 
 export default function LoginScreen({ navigation }) {
+  const { setUser } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
 
   const handleLogin = async () => {
     try {
-      if (!email || !password) {
-        Alert.alert("Error", "Please fill in all fields");
-        return;
-      }
+      // Giả lập response từ API
+      const userInfo = {
+        fullName: fullName,
+        email: email || "",
+        username: "",
+      };
 
-      const response = await api.post("/auth/login", {
-        email,
-        password,
-      });
+      console.log("Login with user:", userInfo); // debug
+      await setUser(userInfo);
 
-      if (response.data.token) {
-        await SecureStore.setItemAsync("token", response.data.token);
-        await SecureStore.setItemAsync(
-          "user",
-          JSON.stringify(response.data.user)
-        );
-        navigation.reset({
-          index: 0,
-          routes: [{ name: "Main" }],
-        });
-      }
+      navigation.navigate("Main");
     } catch (error) {
-      console.error("Login error:", error);
-      Alert.alert(
-        "Error",
-        error.response?.data?.message || "Unable to login. Please try again."
-      );
+      console.error("Login error:", error); //  debug
+      Alert.alert("Lỗi", "Đăng nhập thất bại");
     }
   };
 
@@ -58,16 +48,16 @@ export default function LoginScreen({ navigation }) {
       />
       <TextInput
         style={styles.input}
-        placeholder="Password"
+        placeholder="Mật khẩu"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Login</Text>
+        <Text style={styles.buttonText}>Đăng nhập</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => navigation.navigate("Register")}>
-        <Text style={styles.link}>Don't have an account? Register</Text>
+        <Text style={styles.link}>Bạn chưa có tài khoản? Đăng ký</Text>
       </TouchableOpacity>
     </View>
   );
@@ -78,6 +68,10 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     justifyContent: "center",
+    position: "relative",
+    top: 40,
+    left: 0,
+    right: 0,
   },
   input: {
     height: 40,

@@ -8,37 +8,32 @@ import {
   Alert,
 } from "react-native";
 import api from "../../config/api";
+import { useAuth } from "../../context/AuthContext";
 
 export default function RegisterScreen({ navigation }) {
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+  const { setUser } = useAuth();
 
   const handleRegister = async () => {
     try {
-      if (!email || !password || !fullName) {
-        Alert.alert("Error", "Please fill in all fields");
+      if (!fullName || !email || !password) {
+        Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin");
         return;
       }
 
-      const response = await api.post("/auth/register", {
-        email,
-        password,
-        fullName,
-      });
+      const userInfo = {
+        fullName: fullName,
+        email: email,
+        username: email.split("@")[0],
+      };
 
-      Alert.alert("Success", "Registration successful", [
-        {
-          text: "OK",
-          onPress: () => navigation.navigate("Login"),
-        },
-      ]);
+      await setUser(userInfo);
+
+      navigation.navigate("Main");
     } catch (error) {
-      console.error("Registration error:", error);
-      Alert.alert(
-        "Error",
-        error.response?.data?.message || "Unable to register. Please try again."
-      );
+      Alert.alert("Lỗi", "Đăng ký thất bại");
     }
   };
 
@@ -46,7 +41,7 @@ export default function RegisterScreen({ navigation }) {
     <View style={styles.container}>
       <TextInput
         style={styles.input}
-        placeholder="Full Name"
+        placeholder="Tên người dùng"
         value={fullName}
         onChangeText={setFullName}
       />
@@ -60,16 +55,16 @@ export default function RegisterScreen({ navigation }) {
       />
       <TextInput
         style={styles.input}
-        placeholder="Password"
+        placeholder="Mật khẩu"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
       <TouchableOpacity style={styles.button} onPress={handleRegister}>
-        <Text style={styles.buttonText}>Register</Text>
+        <Text style={styles.buttonText}>Đăng ký</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => navigation.navigate("Login")}>
-        <Text style={styles.link}>Already have an account? Login</Text>
+        <Text style={styles.link}>Bạn đã có tài khoản? Đăng nhập</Text>
       </TouchableOpacity>
     </View>
   );

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -8,58 +8,113 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useBudget } from "../../context/BudgetContext";
+import { useTransaction } from "../../context/TransactionContext";
+import EditBalanceModal from "../../components/EditBalanceModal";
 
-export default function OverviewScreen() {
+export default function OverviewScreen({ navigation }) {
   const { totalBalance } = useBudget();
+  const { transactions } = useTransaction();
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   const formatCurrency = (amount) => {
     return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
+  // Tính tổng thu và chi trong tháng hiện tại
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+
+  const monthlyTransactions = transactions.filter((transaction) => {
+    const transDate = new Date(transaction.createdAt);
+    return (
+      transDate.getMonth() === currentMonth &&
+      transDate.getFullYear() === currentYear
+    );
+  });
+
+  const totalExpense = monthlyTransactions
+    .filter((t) => t.type === "expense")
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const totalIncome = monthlyTransactions
+    .filter((t) => t.type === "income")
+    .reduce((sum, t) => sum + t.amount, 0);
+
   return (
     <ScrollView style={styles.container}>
-      {/* Ví của tôi */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Ví của tôi</Text>
-        <View style={styles.walletItem}>
-          <View style={styles.walletIcon}>
-            <Ionicons name="document-outline" size={24} color="#666" />
+      <View style={styles.content}>
+        <TouchableOpacity
+          style={styles.balanceCard}
+          onPress={() => setIsModalVisible(true)}>
+          <View style={styles.balanceContent}>
+            <Text style={styles.balanceLabel}>Tổng số dư</Text>
+            <Text style={styles.balanceAmount}>
+              {formatCurrency(totalBalance)}đ
+            </Text>
           </View>
-          <Text style={styles.walletLabel}>Tổng số dư</Text>
-          <Text style={styles.walletAmount}>
-            {formatCurrency(totalBalance)} đ
-          </Text>
-        </View>
-      </View>
+        </TouchableOpacity>
 
-      {/* Báo cáo tháng này */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Báo cáo tháng này</Text>
-        <View style={styles.reportContainer}>
-          <View style={styles.reportItem}>
-            <Text style={styles.reportLabel}>Tổng đã chi</Text>
-            <Text style={[styles.reportAmount, styles.expenseAmount]}>0</Text>
-          </View>
-          <View style={styles.reportDivider} />
-          <View style={styles.reportItem}>
-            <Text style={styles.reportLabel}>Tổng thu</Text>
-            <Text style={[styles.reportAmount, styles.incomeAmount]}>0</Text>
+        <View style={styles.reportCard}>
+          <Text style={styles.reportTitle}>Báo cáo tháng này</Text>
+          <View style={styles.reportContent}>
+            <View style={styles.reportColumn}>
+              <Text style={styles.reportLabel}>Tổng đã chi</Text>
+              <Text style={[styles.reportAmount, styles.expenseText]}>
+                {formatCurrency(totalExpense)}
+              </Text>
+            </View>
+            <View style={[styles.reportColumn, styles.borderLeft]}>
+              <Text style={styles.reportLabel}>Tổng thu</Text>
+              <Text style={[styles.reportAmount, styles.incomeText]}>
+                {formatCurrency(totalIncome)}
+              </Text>
+            </View>
           </View>
         </View>
-        <View style={styles.chartContainer}>{/* Placeholder for chart */}</View>
-      </View>
 
-      {/* Giao dịch gần đây */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Giao dịch gần đây</Text>
-          <TouchableOpacity>
-            <Text style={styles.viewAllLink}>Xem tất cả</Text>
-          </TouchableOpacity>
+        <View style={styles.recentTransactions}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Giao dịch gần đây</Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Transactions")}>
+              <Text style={styles.viewAllText}>Xem tất cả</Text>
+            </TouchableOpacity>
+          </View>
+
+          {transactions.length > 0 ? (
+            <View style={styles.transactionList}>
+              {transactions.slice(0, 5).map((transaction) => (
+                <View key={transaction.id} style={styles.transactionItem}>
+                  <Text style={styles.transactionText}>
+                    {transaction.note || "Giao dịch"}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.transactionAmount,
+                      transaction.type === "expense"
+                        ? styles.expenseText
+                        : styles.incomeText,
+                    ]}>
+                    {transaction.type === "expense" ? "-" : "+"}
+                    {formatCurrency(transaction.amount)}đ
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.emptyTransactions}>
+              <Text style={styles.emptyText}>
+                Giao dịch đã thêm sẽ hiển thị ở đây 😊
+              </Text>
+            </View>
+          )}
         </View>
-        <View style={styles.transactionList}>
-          <Text style={styles.emptyText}></Text>
-        </View>
+
+        <EditBalanceModal
+          visible={isModalVisible}
+          onClose={() => setIsModalVisible(false)}
+          currentBalance={totalBalance}
+        />
       </View>
     </ScrollView>
   );
@@ -70,72 +125,94 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f5f5f5",
   },
-  section: {
-    backgroundColor: "white",
-    marginBottom: 10,
+  content: {
     padding: 16,
   },
-  sectionTitle: {
-    fontSize: 18,
+  balanceCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  balanceContent: {
+    alignItems: "center",
+  },
+  balanceLabel: {
+    fontSize: 16,
+    color: "#666",
+    marginBottom: 8,
+  },
+  balanceAmount: {
+    fontSize: 24,
     fontWeight: "bold",
+    color: "#000",
+  },
+  reportCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  reportTitle: {
+    fontSize: 16,
+    color: "#666",
     marginBottom: 16,
   },
-  walletItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f8f8f8",
-    padding: 12,
-    borderRadius: 8,
-  },
-  walletIcon: {
-    width: 40,
-    height: 40,
-    backgroundColor: "#eee",
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-  walletLabel: {
-    flex: 1,
-    fontSize: 16,
-  },
-  walletAmount: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  reportContainer: {
+  reportContent: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 20,
   },
-  reportItem: {
+  reportColumn: {
     flex: 1,
     alignItems: "center",
   },
-  reportDivider: {
-    width: 1,
-    backgroundColor: "#ddd",
-    marginHorizontal: 20,
+  borderLeft: {
+    borderLeftWidth: 1,
+    borderLeftColor: "#eee",
   },
   reportLabel: {
-    fontSize: 16,
+    fontSize: 14,
+    color: "#666",
     marginBottom: 8,
   },
   reportAmount: {
     fontSize: 18,
     fontWeight: "bold",
   },
-  expenseAmount: {
+  expenseText: {
     color: "#FF3B30",
   },
-  incomeAmount: {
+  incomeText: {
     color: "#4CAF50",
   },
-  chartContainer: {
-    height: 200,
-    backgroundColor: "#f8f8f8",
-    borderRadius: 8,
+  recentTransactions: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   sectionHeader: {
     flexDirection: "row",
@@ -143,19 +220,39 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
-  viewAllLink: {
-    color: "#4CAF50",
+  sectionTitle: {
+    fontSize: 16,
+    color: "#666",
+  },
+  viewAllText: {
     fontSize: 14,
+    color: "#4CAF50",
   },
   transactionList: {
-    backgroundColor: "#f8f8f8",
-    borderRadius: 8,
+    gap: 12,
+  },
+  transactionItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  transactionText: {
+    fontSize: 14,
+    color: "#666",
+  },
+  transactionAmount: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  emptyTransactions: {
     padding: 16,
-    minHeight: 100,
-    justifyContent: "center",
     alignItems: "center",
   },
   emptyText: {
+    fontSize: 14,
     color: "#666",
     textAlign: "center",
   },
