@@ -12,11 +12,23 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTransaction } from "../../context/TransactionContext";
 import { useBudget } from "../../context/BudgetContext";
 
+// Danh sách nhóm chi tiêu
+const CATEGORIES = [
+  { id: "1", name: "Ăn uống", icon: "restaurant" },
+  { id: "2", name: "Di chuyển", icon: "car" },
+  { id: "3", name: "Mua sắm", icon: "cart" },
+  { id: "4", name: "Giải trí", icon: "game-controller" },
+  { id: "5", name: "Hóa đơn", icon: "receipt" },
+];
+
 export default function EditTransactionScreen({ route, navigation }) {
   const { transaction } = route.params;
   const [amount, setAmount] = useState(transaction.amount.toString());
   const [note, setNote] = useState(transaction.note);
-  const [category, setCategory] = useState(transaction.category);
+  const [selectedCategory, setSelectedCategory] = useState(
+    CATEGORIES.find((cat) => cat.name === transaction.category) || CATEGORIES[0]
+  );
+  const [showCategories, setShowCategories] = useState(false);
 
   const { updateTransaction } = useTransaction();
   const { updateBalance } = useBudget();
@@ -26,9 +38,14 @@ export default function EditTransactionScreen({ route, navigation }) {
     setAmount(numericValue);
   };
 
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category);
+    setShowCategories(false);
+  };
+
   const handleUpdate = async () => {
-    if (!amount || amount === "0") {
-      Alert.alert("Lỗi", "Vui lòng nhập số tiền");
+    if (!amount || parseInt(amount) === 0) {
+      Alert.alert("Lỗi", "Vui lòng nhập số tiền hợp lệ");
       return;
     }
 
@@ -39,14 +56,15 @@ export default function EditTransactionScreen({ route, navigation }) {
       await updateTransaction(transaction.id, {
         amount: numericAmount,
         note,
-        category,
+        category: selectedCategory.name,
+        categoryIcon: selectedCategory.icon,
       });
 
       // Cập nhật số dư tổng
       if (transaction.type === "expense") {
-        await updateBalance(amountDiff);
-      } else {
         await updateBalance(-amountDiff);
+      } else {
+        await updateBalance(amountDiff);
       }
 
       Alert.alert("Thành công", "Đã cập nhật giao dịch", [
@@ -61,49 +79,83 @@ export default function EditTransactionScreen({ route, navigation }) {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.closeButton}
-          onPress={() => navigation.goBack()}>
-          <Ionicons name="close" size={24} color="black" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Sửa giao dịch</Text>
+    <ScrollView style={styles.container}>
+      {/* Số tiền */}
+      <View style={styles.amountContainer}>
+        <Text style={styles.amountLabel}>Số tiền</Text>
+        <View style={styles.amountInputContainer}>
+          <Text style={styles.currencyText}>VND</Text>
+          <TextInput
+            style={styles.amountInput}
+            value={amount}
+            onChangeText={handleAmountChange}
+            keyboardType="numeric"
+            placeholder="0"
+          />
+        </View>
       </View>
 
-      <ScrollView style={styles.content}>
-        {/* Amount Input */}
-        <View style={styles.amountSection}>
-          <Text style={styles.label}>Số tiền</Text>
-          <View style={styles.amountRow}>
-            <Text style={styles.currency}>VND</Text>
-            <TextInput
-              style={styles.amountInput}
-              value={amount}
-              onChangeText={handleAmountChange}
-              keyboardType="numeric"
-              placeholder="0"
-              placeholderTextColor="#666"
-            />
-          </View>
-        </View>
-
-        {/* Category Selection */}
-        <TouchableOpacity style={styles.menuItem}>
+      {/* Chọn nhóm */}
+      <View style={styles.menuSection}>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => setShowCategories(!showCategories)}>
           <View style={styles.menuLeft}>
             <View style={styles.iconPlaceholder}>
-              <Ionicons name="help" size={24} color="#666" />
+              <Ionicons
+                name={selectedCategory.icon}
+                size={24}
+                color="#4CAF50"
+              />
             </View>
-            <Text style={styles.menuText}>{category || "Chọn nhóm"}</Text>
+            <Text style={styles.menuText}>{selectedCategory.name}</Text>
           </View>
-          <Ionicons name="chevron-forward" size={24} color="#666" />
+          <Ionicons
+            name={showCategories ? "chevron-up" : "chevron-down"}
+            size={24}
+            color="#666"
+          />
         </TouchableOpacity>
 
-        {/* Note Input */}
+        {showCategories && (
+          <View style={styles.categoriesList}>
+            {CATEGORIES.map((category) => (
+              <TouchableOpacity
+                key={category.id}
+                style={[
+                  styles.categoryItem,
+                  selectedCategory.id === category.id &&
+                    styles.selectedCategory,
+                ]}
+                onPress={() => handleCategorySelect(category)}>
+                <Ionicons
+                  name={category.icon}
+                  size={24}
+                  color={
+                    selectedCategory.id === category.id ? "#4CAF50" : "#666"
+                  }
+                />
+                <Text
+                  style={[
+                    styles.categoryText,
+                    selectedCategory.id === category.id &&
+                      styles.selectedCategoryText,
+                  ]}>
+                  {category.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </View>
+
+      {/* Ghi chú */}
+      <View style={styles.menuSection}>
         <View style={styles.menuItem}>
           <View style={styles.menuLeft}>
-            <Ionicons name="list" size={24} color="#666" />
+            <View style={styles.iconPlaceholder}>
+              <Ionicons name="create-outline" size={24} color="#4CAF50" />
+            </View>
             <TextInput
               style={styles.noteInput}
               value={note}
@@ -113,84 +165,66 @@ export default function EditTransactionScreen({ route, navigation }) {
             />
           </View>
         </View>
-      </ScrollView>
+      </View>
 
-      {/* Update Button */}
+      {/* Nút cập nhật */}
       <TouchableOpacity
         style={[
           styles.updateButton,
-          amount && amount !== "0" ? styles.updateButtonActive : {},
+          amount && parseInt(amount) > 0 ? styles.updateButtonActive : {},
         ]}
-        onPress={handleUpdate}>
+        onPress={handleUpdate}
+        disabled={!amount || parseInt(amount) === 0}>
         <Text
           style={[
             styles.updateButtonText,
-            amount && amount !== "0" ? styles.updateButtonTextActive : {},
+            amount && parseInt(amount) > 0 ? styles.updateButtonTextActive : {},
           ]}>
-          CẬP NHẬT
+          Cập nhật
         </Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "white",
+    backgroundColor: "#fff",
   },
-  header: {
-    flexDirection: "row",
+  amountContainer: {
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
-    alignItems: "center",
   },
-  closeButton: {
-    padding: 8,
-    marginRight: 8,
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 20,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginRight: 40,
-  },
-  content: {
-    flex: 1,
-  },
-  amountSection: {
-    padding: 16,
-    backgroundColor: "#f5f5f5",
-    marginBottom: 1,
-  },
-  label: {
-    fontSize: 14,
+  amountLabel: {
+    fontSize: 16,
     color: "#666",
     marginBottom: 8,
   },
-  amountRow: {
+  amountInputContainer: {
     flexDirection: "row",
     alignItems: "center",
   },
-  currency: {
-    fontSize: 16,
+  currencyText: {
+    fontSize: 24,
     color: "#666",
     marginRight: 8,
   },
   amountInput: {
+    flex: 1,
     fontSize: 24,
-    color: "#4CAF50",
-    minWidth: 100,
+    color: "#000",
+  },
+  menuSection: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
   },
   menuItem: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     padding: 16,
-    backgroundColor: "#f5f5f5",
-    marginBottom: 1,
   },
   menuLeft: {
     flexDirection: "row",
@@ -201,19 +235,40 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#eee",
+    backgroundColor: "#E8F5E9",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
   },
   menuText: {
     fontSize: 16,
+    color: "#000",
+  },
+  categoriesList: {
+    backgroundColor: "#f5f5f5",
+  },
+  categoryItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  selectedCategory: {
+    backgroundColor: "#E8F5E9",
+  },
+  categoryText: {
+    fontSize: 16,
     color: "#666",
+    marginLeft: 12,
+  },
+  selectedCategoryText: {
+    color: "#4CAF50",
+    fontWeight: "500",
   },
   noteInput: {
     flex: 1,
     fontSize: 16,
-    marginLeft: 12,
     color: "#666",
   },
   updateButton: {

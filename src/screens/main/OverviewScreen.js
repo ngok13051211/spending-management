@@ -49,13 +49,13 @@ export default function OverviewScreen({ navigation }) {
           <View style={styles.balanceContent}>
             <Text style={styles.balanceLabel}>Tổng số dư</Text>
             <Text style={styles.balanceAmount}>
-              {formatCurrency(totalBalance)}đ
+              {formatCurrency(totalBalance)} VND
             </Text>
           </View>
         </TouchableOpacity>
 
         <View style={styles.reportCard}>
-          <Text style={styles.reportTitle}>Báo cáo tháng này</Text>
+          <Text style={styles.reportTitle}>Báo cáo thống kê</Text>
           <View style={styles.reportContent}>
             <View style={styles.reportColumn}>
               <Text style={styles.reportLabel}>Tổng đã chi</Text>
@@ -96,7 +96,7 @@ export default function OverviewScreen({ navigation }) {
                         : styles.incomeText,
                     ]}>
                     {transaction.type === "expense" ? "-" : "+"}
-                    {formatCurrency(transaction.amount)}đ
+                    {formatCurrency(transaction.amount)} VND
                   </Text>
                 </View>
               ))}
