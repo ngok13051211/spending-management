@@ -17,6 +17,7 @@ import AccountScreen from "./src/screens/main/AccountScreen";
 import AddTransactionScreen from "./src/screens/transaction/AddTransactionScreen";
 import AddBudgetScreen from "./src/screens/budget/AddBudgetScreen";
 import EditTransactionScreen from "./src/screens/transaction/EditTransactionScreen";
+import StatisticsScreen from "./src/screens/main/StatisticsScreen";
 
 import { BudgetProvider } from "./src/context/BudgetContext";
 import { TransactionProvider } from "./src/context/TransactionContext";
@@ -165,6 +166,11 @@ export default function App() {
                   title: "Sửa giao dịch",
                   presentation: "modal",
                 }}
+              />
+              <Stack.Screen
+                name="Statistics"
+                component={StatisticsScreen}
+                options={{ title: "Báo cáo thống kê" }}
               />
             </Stack.Navigator>
           </NavigationContainer>

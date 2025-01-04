@@ -10,10 +10,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { useBudget } from "../../context/BudgetContext";
 import { useTransaction } from "../../context/TransactionContext";
 import EditBalanceModal from "../../components/EditBalanceModal";
+import { useNavigation } from "@react-navigation/native";
 
-export default function OverviewScreen({ navigation }) {
+export default function OverviewScreen() {
   const { totalBalance } = useBudget();
   const { transactions } = useTransaction();
+  const navigation = useNavigation();
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   const formatCurrency = (amount) => {
@@ -49,13 +51,20 @@ export default function OverviewScreen({ navigation }) {
           <View style={styles.balanceContent}>
             <Text style={styles.balanceLabel}>Tổng số dư</Text>
             <Text style={styles.balanceAmount}>
-              {formatCurrency(totalBalance)} VND
+              {formatCurrency(totalBalance)} Vnd
             </Text>
           </View>
         </TouchableOpacity>
 
         <View style={styles.reportCard}>
-          <Text style={styles.reportTitle}>Báo cáo thống kê</Text>
+          <View style={styles.reportHeader}>
+            <Text style={styles.reportTitle}>Báo cáo tháng này</Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Statistics")}
+              style={styles.viewAllContainer}>
+              <Text style={styles.viewAllText}>Xem chi tiết</Text>
+            </TouchableOpacity>
+          </View>
           <View style={styles.reportContent}>
             <View style={styles.reportColumn}>
               <Text style={styles.reportLabel}>Tổng đã chi</Text>
@@ -86,7 +95,7 @@ export default function OverviewScreen({ navigation }) {
               {transactions.slice(0, 5).map((transaction) => (
                 <View key={transaction.id} style={styles.transactionItem}>
                   <Text style={styles.transactionText}>
-                    {transaction.note || "Giao dịch"}
+                    {transaction.category || "Nhóm"}
                   </Text>
                   <Text
                     style={[
@@ -96,7 +105,7 @@ export default function OverviewScreen({ navigation }) {
                         : styles.incomeText,
                     ]}>
                     {transaction.type === "expense" ? "-" : "+"}
-                    {formatCurrency(transaction.amount)} VND
+                    {formatCurrency(transaction.amount)} Vnd
                   </Text>
                 </View>
               ))}
@@ -104,7 +113,7 @@ export default function OverviewScreen({ navigation }) {
           ) : (
             <View style={styles.emptyTransactions}>
               <Text style={styles.emptyText}>
-                Giao dịch đã thêm sẽ hiển thị ở đây 😊
+                Giao dịch đã thêm sẽ hiển thị ở đây
               </Text>
             </View>
           )}
@@ -172,7 +181,6 @@ const styles = StyleSheet.create({
   reportTitle: {
     fontSize: 16,
     color: "#666",
-    marginBottom: 16,
   },
   reportContent: {
     flexDirection: "row",
@@ -189,7 +197,7 @@ const styles = StyleSheet.create({
   reportLabel: {
     fontSize: 14,
     color: "#666",
-    marginBottom: 8,
+    marginBottom: 12,
   },
   reportAmount: {
     fontSize: 18,
@@ -218,7 +226,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 18,
+    paddingVertical: 8,
   },
   sectionTitle: {
     fontSize: 16,
@@ -227,6 +236,9 @@ const styles = StyleSheet.create({
   viewAllText: {
     fontSize: 14,
     color: "#4CAF50",
+    lineHeight: 20,
+    textAlign: "right",
+    marginLeft: 10,
   },
   transactionList: {
     gap: 12,
@@ -255,5 +267,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     textAlign: "center",
+  },
+  viewAllContainer: {
+    paddingVertical: 0,
+  },
+  reportHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 28,
+    marginTop: -2,
   },
 });
